@@ -1,0 +1,300 @@
+{
+  "name": "Agente de gastos",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -112,
+        -16
+      ],
+      "id": "a0e10076-b85a-417d-b26f-eb44af96f575",
+      "name": "When chat message received",
+      "webhookId": "6e50f420-00f5-492d-a9aa-9e535ef3cfe4"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=Você é um assistente financeiro capaz de gerenciar registros de gastos no Supabase. Sua função é interagir com a tabela gastos, ajudando o usuário a visualizar adicionar e editar suas despesas.\n\nSempre que o usuário solicitar, ative a tool:\n\n1️⃣ Visualizar Gastos (tool_visualizar_gastos)\n    •    Exiba os registros da tabela com nome, tipo e valor.\n    •    Se o usuário quiser filtrar por tipo ou período, pergunte os critérios antes de chamar a tool.\n\n2️⃣ Adicionar Gasto (tool_criar_gasto)\nPara ativar a tool é necessário ter:\n- nome_gasto (nome do gasto);\n- valor_gasto (valor do gasto);\n- tipo_gasto (Você deve categorizar tipo com base na mensagem do usuário, existem apenas 4 tipos de gastos: Supermercado, Diversão, Saúde e Educação)\nConfirme o registro antes de enviá-lo.\n\n3️⃣ Editar Gasto (tool_atualizar_gasto), siga o passo a passo:\n- Pergunte qual registro editar (nome).\n- Para isso ative a tool visualizar gasto para confirmar o nome exato do gasto\n- Confirme com o usuário qual gasto ele irá atualizar\n- Com o nome_gasto do gasto, ative a tool_atualizar_gasto e faça a alteração\n- Após a edição, mostre a atualização feita."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        96,
+        -16
+      ],
+      "id": "38f30296-9ecb-4de8-917d-89fb0cde5a98",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -48,
+        192
+      ],
+      "id": "2149435a-2cb1-4866-8262-8181337f5e43",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "krZwiHJMsjH1rBoP",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        112,
+        192
+      ],
+      "id": "f71eae51-8286-4083-bff4-7d554c3635da",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "gastos",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        336,
+        192
+      ],
+      "id": "e2058f16-a6bf-4936-bf46-b5eae4dc2860",
+      "name": "tool_visualizar_gastos",
+      "credentials": {
+        "supabaseApi": {
+          "id": "saMlkBDTreHfODAl",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "gastos",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $fromAI('nome_gasto') }}"
+            },
+            {
+              "fieldId": "valor",
+              "fieldValue": "={{ $fromAI('valor_gasto') }}"
+            },
+            {
+              "fieldId": "tipo",
+              "fieldValue": "={{ $fromAI('tipo_gasto') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        496,
+        192
+      ],
+      "id": "62b4b016-fd1a-40fe-a3a0-588533cba6ad",
+      "name": "tool_criar_gasto",
+      "credentials": {
+        "supabaseApi": {
+          "id": "saMlkBDTreHfODAl",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "gastos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "nome",
+              "condition": "eq",
+              "keyValue": "={{ $fromAI('nome_gasto') }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $fromAI('nome_gasto') }}"
+            },
+            {
+              "fieldId": "valor",
+              "fieldValue": "={{ $fromAI('valor_gasto') }}"
+            },
+            {
+              "fieldId": "tipo",
+              "fieldValue": "={{ $fromAI('tipo_gasto') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        656,
+        192
+      ],
+      "id": "b45b169b-d4bc-4eb3-b65e-2d560079cdf3",
+      "name": "tool_atualizar_gasto",
+      "credentials": {
+        "supabaseApi": {
+          "id": "saMlkBDTreHfODAl",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "gastos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "nome",
+              "condition": "eq",
+              "keyValue": "={{ $fromAI('nome_gasto') }}"
+            },
+            {
+              "keyName": "valor",
+              "condition": "eq",
+              "keyValue": "={{ $fromAI('valor_gasto') }}"
+            },
+            {
+              "keyName": "tipo",
+              "condition": "eq",
+              "keyValue": "={{ $fromAI('tipo_gasto') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        832,
+        192
+      ],
+      "id": "09043138-1167-4042-9981-e6868287ccbb",
+      "name": "tool_deletar_gasto",
+      "credentials": {
+        "supabaseApi": {
+          "id": "saMlkBDTreHfODAl",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tool_visualizar_gastos": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tool_criar_gasto": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tool_atualizar_gasto": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tool_deletar_gasto": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c9e3c976-1064-47c2-94e4-db3757a29bf8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9d12ec5f513d5c5f73898ffbe3f0496f8b598d19190aa1ff63079b673510c5d3"
+  },
+  "id": "AVcQkTwXKVT1Txg2",
+  "tags": []
+}
